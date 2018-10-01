@@ -370,7 +370,7 @@ int compara_secundario(const void *a, const void *b){
   Is *ib = (Is *)b;
 	if (strcmp(ia->string, ib->string) == 0)
 		return strcmp(ia->pk, ib->pk);
-	return strncmp(ia->string, ib->string, strlen(ia->string));
+	return strcmp(ia->string, ib->string);
 }
 
 int compara_preco(const void *a, const void *b){
@@ -543,6 +543,7 @@ Produto recuperar_registro(int rrn)
 	p = strtok(NULL,"@");
 	strcpy(j.categoria,p);
 	gerarChave(&j);
+
 	return j;
 }
 
@@ -609,17 +610,21 @@ char remover(Ip *iprimary, int nregistros){
 	ARQUIVO[((registro->rrn)*192)+1] = '|';
 	registro->rrn = -1;
 
+	//free(registro);
+
 	return 1;
 }
 
 void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistros, int ncat){
-	int opSearch = 0, rrn;
+	int opSearch = 0, rrn, indice;
+	Ip *registro_p;
+	Is *registro_s;
+	char pk[11] = "";
+	char nome[TAM_NOME] = "";
+	char categoria[TAM_CATEGORIA] = "";
+	char *lista = (char *) malloc ((nregistros*TAM_PRIMARY_KEY)+nregistros+1);
 	scanf("%d%*c", &opSearch);
 	switch(opSearch){
-		Ip *registro_p;
-		Is *registro_s;
-		char pk[11];
-		char nome[51];
 		case 1:
 			scanf("%s%*c", pk);
 			registro_p = bsearch(pk, iprimary, nregistros, sizeof(Ip), compara_primario);
@@ -642,8 +647,18 @@ void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistro
 			}
 		break;
 		case 3:
+			scanf("%[^\n]s%*c", nome);
+			scanf("%[^\n]s", categoria);
+			registro_s = bsearch(nome, ibrand, nregistros, sizeof(Is), compara_secundario);
+			if(registro_s == NULL)
+				printf(REGISTRO_N_ENCONTRADO);
+			else{
+				indice = (int)(registro_s - ibrand);
+				printf("%d\n\n", indice);
+			}
 		break;
 	}
+	free(lista);
 }
 
 /* Imprimir indices secundarios */
