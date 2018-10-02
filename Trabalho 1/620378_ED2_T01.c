@@ -147,6 +147,7 @@ int compara_primario(const void *a, const void *b);
 int compara_secundario(const void *a, const void *b);
 int compara_preco(const void *a, const void *b);
 int compara_categoria(const void *a, const void *b);
+int compara_str_secundario(const void *a, const void *b);
 
 // rotinas de listagem
 void listar(Ip *iprimary, Is* ibrand, Ir* icategory, Isf *iprice, int nregistros, int ncat);
@@ -275,6 +276,7 @@ int main(){
 			case 6:
 				/*libera espaço*/
 				libera_espaco(&nregistros);
+				// refaz todos os indices
 				ncat = 0;
 				if(nregistros > 0){
 					for(int i = 0; i < nregistros; i++){
@@ -373,6 +375,11 @@ int compara_secundario(const void *a, const void *b){
 	return strcmp(ia->string, ib->string);
 }
 
+int compara_str_secundario(const void *a, const void *b){
+	Is *ib = (Is *)b;
+	return strcmp((char *)a, ib->string);
+}
+
 int compara_preco(const void *a, const void *b){
 	Isf *ia = (Isf *)a;
   Isf *ib = (Isf *)b;
@@ -380,7 +387,8 @@ int compara_preco(const void *a, const void *b){
 		return -1;
 	if(ia->price > ib->price)
 		return 1;
-	return strcmp(ia->pk, ib->pk);
+	else
+		return strcmp(ia->pk, ib->pk);
 }
 
 int compara_categoria(const void *a, const void *b){
@@ -388,6 +396,12 @@ int compara_categoria(const void *a, const void *b){
   Ir *ib = (Ir *)b;
 
 	return strcmp(ia->cat, ib->cat);
+}
+
+int compara_str_reverso(const void *a, const void *b){
+  Ir *ib = (Ir *)b;
+
+	return strcmp((char *)a, ib->cat);
 }
 
 void listar(Ip *iprimary, Is* ibrand, Ir* icategory, Isf *iprice, int nregistros, int ncat){
@@ -409,7 +423,7 @@ void listar(Ip *iprimary, Is* ibrand, Ir* icategory, Isf *iprice, int nregistros
 		break;
 		case 2:
 			scanf("%[^\n]s%*c", categoria);
-			registro = bsearch(categoria, icategory, ncat, sizeof(Ir), compara_categoria);
+			registro = bsearch(categoria, icategory, ncat, sizeof(Ir), compara_str_reverso);
 			if(registro != NULL){
 				sem_registro = 0;
 				while(registro->lista != NULL){
@@ -610,19 +624,19 @@ char remover(Ip *iprimary, int nregistros){
 	ARQUIVO[((registro->rrn)*192)+1] = '|';
 	registro->rrn = -1;
 
-	//free(registro);
-
 	return 1;
 }
 
 void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistros, int ncat){
-	int opSearch = 0, rrn, indice;
+	int opSearch = 0, rrn, indice, compara, registro = 0;
 	Ip *registro_p;
 	Is *registro_s;
+	Ir *registro_i;
 	char pk[11] = "";
 	char nome[TAM_NOME] = "";
 	char categoria[TAM_CATEGORIA] = "";
 	char *lista = (char *) malloc ((nregistros*TAM_PRIMARY_KEY)+nregistros+1);
+	ll *chaves;
 	scanf("%d%*c", &opSearch);
 	switch(opSearch){
 		case 1:
@@ -635,26 +649,60 @@ void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistro
 		break;
 		case 2:
 			scanf("%[^\n]s%*c", nome);
-			registro_s = bsearch(nome, iproduct, nregistros, sizeof(Is), compara_secundario);
+			registro_s = bsearch(nome, iproduct, nregistros, sizeof(Is), compara_str_secundario);
 			if(registro_s == NULL)
 				printf(REGISTRO_N_ENCONTRADO);
 			else{
-				rrn = procura_rrn(iprimary, registro_s->pk, nregistros);
-				if(rrn != -1)
+				indice = registro_s - iproduct;
+				while((indice - 1) >= 0 && strcmp(nome, iproduct[indice-1].string) == 0)
+					indice--;
+				while(strcmp(nome, iproduct[indice].string) == 0){
+					rrn = procura_rrn(iprimary, iproduct[indice].pk, nregistros);
 					exibir_registro(rrn, 0);
-	 			else
+					if(rrn != -1)
+						registro = 1;
+					indice++;
+					if(strcmp(nome, iproduct[indice].string) == 0)
+						printf("\n");
+				}
+				if(registro == 0)
 					printf(REGISTRO_N_ENCONTRADO);
 			}
 		break;
 		case 3:
-			scanf("%[^\n]s%*c", nome);
-			scanf("%[^\n]s", categoria);
-			registro_s = bsearch(nome, ibrand, nregistros, sizeof(Is), compara_secundario);
+			scanf(" %[^\n]s%*c", nome);
+			scanf(" %[^\n]s%*c", categoria);
+			registro_s = bsearch(nome, ibrand, nregistros, sizeof(Is), compara_str_secundario);
 			if(registro_s == NULL)
 				printf(REGISTRO_N_ENCONTRADO);
 			else{
-				indice = (int)(registro_s - ibrand);
-				printf("%d\n\n", indice);
+				indice = (registro_s - ibrand);
+				while((indice - 1) >= 0 && strcmp(nome, ibrand[indice-1].string) == 0)
+					indice--;
+				while(strcmp(nome, ibrand[indice].string) == 0){
+					strcat(lista, ibrand[indice].pk);
+					strcat(lista, " ");
+					indice++;
+				}
+				registro_i = bsearch(categoria, icategory, ncat, sizeof(Ir), compara_str_reverso);
+				if(registro_i == NULL)
+					printf(REGISTRO_N_ENCONTRADO);
+				else{
+					chaves = registro_i->lista;
+					while(chaves != NULL){
+						if(strstr(lista, chaves->pk) != NULL){
+							rrn = procura_rrn(iprimary, chaves->pk, nregistros);
+							exibir_registro(rrn, 0);
+							if(rrn != -1)
+								registro = 1;
+							if(chaves->prox!= NULL && strstr(lista, chaves->prox->pk) != NULL)
+								printf("\n");
+						}
+						chaves = chaves->prox;
+					}
+					if(registro == 0)
+						printf(REGISTRO_N_ENCONTRADO);
+				}
 			}
 		break;
 	}
@@ -736,7 +784,7 @@ void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
 		else{
 			Ir *registro;
 			ll *aux, *anterior;
-			registro = bsearch(cat, indice_reverso, *ncat, sizeof(Ir), compara_categoria);
+			registro = bsearch(cat, indice_reverso, *ncat, sizeof(Ir), compara_str_reverso);
 			if(registro != NULL){ // ja existe categoria
 				if(registro->lista == NULL || strcmp(p.pk, registro->lista->pk) < 0){
 					novo->prox = registro->lista;
