@@ -305,7 +305,7 @@ int main(){
 				free(iproduct);
 				free(ibrand);
 				free(iprice);
-				// libera_listareversa(icategory, ncat);
+				libera_listareversa(icategory, ncat);
 				return 0;
 			break;
 			default:
@@ -770,10 +770,10 @@ void insere_iprice(Isf *indice_preco, int pos, Produto p){
 
 void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
 	char *cat;
-
+	ll *novo;
 	cat = strtok (p.categoria, "|");
 	while(cat != NULL){
-		ll *novo = (ll *) malloc (sizeof(ll));
+		novo = (ll *) malloc (sizeof(ll));
 		strcpy(novo->pk, p.pk);
 		if (*ncat == 0){ // indice reverso vazio
 			strcpy(indice_reverso->cat, cat);
@@ -786,12 +786,12 @@ void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
 			ll *aux, *anterior;
 			registro = bsearch(cat, indice_reverso, *ncat, sizeof(Ir), compara_str_reverso);
 			if(registro != NULL){ // ja existe categoria
+				aux = registro->lista;
 				if(registro->lista == NULL || strcmp(p.pk, registro->lista->pk) < 0){
-					novo->prox = registro->lista;
+					novo->prox = aux;
 					registro->lista = novo;
 				}
 				else {
-					aux = registro->lista;
 					while(aux != NULL && strcmp(aux->pk, p.pk) < 0){
 						anterior = aux;
 						aux = aux->prox;
@@ -811,6 +811,7 @@ void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
 		}
 		cat = strtok (NULL, "|");
 	}
+	free(cat);
 }
 
 void libera_espaco(int *nregistros){
@@ -831,4 +832,11 @@ void libera_espaco(int *nregistros){
 		}
 		(*nregistros)--;
 	}
+}
+
+void libera_listareversa(Ir *indice_reverso, int ncategorias){
+	for(int i = 0; i < ncategorias; i++){
+		free(indice_reverso[i].lista);
+	}
+	free(indice_reverso);
 }
