@@ -3,7 +3,8 @@
 #include<math.h>
 
 int main(){
-  float a = 201.443;
+  
+  float a = "010"
 
   printf("%lf\n", floor(a));
 

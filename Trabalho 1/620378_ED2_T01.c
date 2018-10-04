@@ -340,7 +340,7 @@ int exibir_registro(int rrn, char com_desconto)
 		sscanf(j.desconto,"%d",&desconto);
 		sscanf(j.preco,"%f",&preco);
 		preco = preco *  (100-desconto);
-		preco = ((int) preco)/ (float) 100 ;
+		preco = ((int) preco)/ (float) 100;
 		printf("%07.2f\n",  preco);
 
 	}
@@ -764,8 +764,12 @@ void insere_isecondary(Is *indice_secundario, int pos, int product, int brand, P
 }
 
 void insere_iprice(Isf *indice_preco, int pos, Produto p){
+	float preco;
 	strcpy(indice_preco[pos].pk, p.pk);
-	indice_preco[pos].price = atof(p.preco) - (atof(p.preco)*atof(p.desconto)/100);
+
+	preco = atof(p.preco) * (100-atof(p.desconto));
+	preco = ((int) preco)/ (float) 100;
+	indice_preco[pos].price = preco;
 }
 
 void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
@@ -800,21 +804,22 @@ void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
 					anterior->prox = novo;
 				}
 			}	else { // nova categoria
-				strcpy(indice_reverso[*ncat].cat, cat);
-				novo->prox = NULL;
-				indice_reverso[*ncat].lista = novo;
-				(*ncat)++;
-			}
+				if(*ncat < 30){
+					strcpy(indice_reverso[*ncat].cat, cat);
+					novo->prox = NULL;
+					indice_reverso[*ncat].lista = novo;
+					(*ncat)++;
+				}
 
-			//ordena Struct
-			qsort(indice_reverso, *ncat, sizeof(Ir), compara_categoria);
+				//ordena Struct
+				qsort(indice_reverso, *ncat, sizeof(Ir), compara_categoria);
 		}
+	}
 		cat = strtok (NULL, "|");
 	}
-	free(cat);
 }
 
-void libera_espaco(int *nregistros){
+void libera_espaco(int *nregistros){ //olhar memmove (comentado na monitoria)
 	// aqui temos que fazer a leitura do arquivo inteiro para encontrar os *|
 	int index;
 	char *sub_arquivo;
