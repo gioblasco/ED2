@@ -9,8 +9,6 @@
  * Aluno: Giovanna Blasco Martin
  * ========================================================================== */
 
- /* Casos muito errados: 17, 19, 25  */
-
 /* Bibliotecas */
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,9 +117,9 @@ Produto recuperar_registro(int rrn);
 void gerarChave(Produto *produto);
 
 /* (Re)faz o índice respectivo */
-void insere_indices(int pos, Produto produto, Ip *iprimary, Is *iproduct, Is *ibrand, Isf *iprice, Ir *icategory, int *ncat);
+void insere_indices(int pos, int lugar, Produto produto, Ip *iprimary, Is *iproduct, Is *ibrand, Isf *iprice, Ir *icategory, int *ncat);
 
-void insere_iprimary(Ip *indice_primario, int pos, Produto prod);
+void insere_iprimary(Ip *indice_primario, int pos, int lugar, Produto prod);
 
 void insere_isecondary(Is *indice_secundario, int pos, int produto, int marca, Produto prod);
 
@@ -216,7 +214,7 @@ int main(){
 	if(nregistros > 0){
 		for(int i = 0; i < nregistros; i++){
 			produto = recuperar_registro(i);
-			insere_indices(i, produto, iprimary, iproduct, ibrand, iprice, icategory, &ncat);
+			insere_indices(i, i, produto, iprimary, iproduct, ibrand, iprice, icategory, &ncat);
 		}
 
 		ordena_indices(nregistros, iprimary, iproduct, ibrand, iprice);
@@ -243,9 +241,14 @@ int main(){
 					printf(ERRO_PK_REPETIDA, novo.pk);
 				}
 				else {
-					insere_indices(nregistros, novo, iprimary, iproduct, ibrand, iprice, icategory, &ncat);
-					nregistros++;
-					ordena_indices(nregistros, iprimary, iproduct, ibrand, iprice);
+					if(rrn == -1){
+						registro = bsearch(novo.pk, iprimary, nregistros, sizeof(Ip), compara_primario);
+						registro->rrn = (strlen(ARQUIVO)/TAM_REGISTRO);
+					} else {
+						insere_indices(nregistros, (strlen(ARQUIVO)/TAM_REGISTRO), novo, iprimary, iproduct, ibrand, iprice, icategory, &ncat);
+						nregistros++;
+						ordena_indices(nregistros, iprimary, iproduct, ibrand, iprice);
+					}
 					// insere entrada no arquivo de dados
 					strcat(ARQUIVO, novo_produto);
 				}
@@ -281,10 +284,11 @@ int main(){
 				libera_espaco(&nregistros);
 				// refaz todos os indices
 				ncat = 0;
+				nregistros = (strlen(ARQUIVO)/TAM_REGISTRO);
 				if(nregistros > 0){
 					for(int i = 0; i < nregistros; i++){
 						produto = recuperar_registro(i);
-						insere_indices(i, produto, iprimary, iproduct, ibrand, iprice, icategory, &ncat);
+						insere_indices(i, i, produto, iprimary, iproduct, ibrand, iprice, icategory, &ncat);
 					}
 
 					ordena_indices(nregistros, iprimary, iproduct, ibrand, iprice);
@@ -417,25 +421,27 @@ void listar(Ip *iprimary, Is* ibrand, Ir* icategory, Isf *iprice, int nregistros
 	switch (opList) {
 		case 1:
 			for(int i = 0; i < nregistros; i++){
-				exibir_registro(iprimary[i].rrn, 0);
 				if(iprimary[i].rrn != -1){
-					sem_registro = 0;
-					if(i != nregistros-1)
+					if(sem_registro == 0)
 						printf("\n");
+					sem_registro = 0;
 				}
+				exibir_registro(iprimary[i].rrn, 0);
 			}
 		break;
 		case 2:
 			scanf(" %[^\n]s%*c", categoria);
 			registro = bsearch(categoria, icategory, ncat, sizeof(Ir), compara_str_reverso);
 			if(registro != NULL){
-				sem_registro = 0;
 				aux = registro->lista;
 				while(aux != NULL){
 					rrn = procura_rrn(iprimary, aux->pk, nregistros);
+					if(rrn >= 0){
+						if(sem_registro == 0)
+							printf("\n");
+						sem_registro = 0;
+					}
 					exibir_registro(rrn, 0);
-					if(rrn >= 0 -1 && aux->prox != NULL)
-						printf("\n");
 					aux = aux->prox;
 				}
 			}
@@ -443,23 +449,23 @@ void listar(Ip *iprimary, Is* ibrand, Ir* icategory, Isf *iprice, int nregistros
 		case 3:
 			for(int i=0; i < nregistros; i++){
 				rrn = procura_rrn(iprimary, ibrand[i].pk, nregistros);
-				exibir_registro(rrn, 0);
 				if(rrn >= 0){
-					sem_registro = 0;
-					if(i != nregistros-1)
+					if(sem_registro == 0)
 						printf("\n");
+					sem_registro = 0;
 				}
+				exibir_registro(rrn, 0);
 			}
 		break;
 		case 4:
 			for(int i=0; i < nregistros; i++){
 				rrn = procura_rrn(iprimary, iprice[i].pk, nregistros);
-				exibir_registro(rrn, 1);
 				if(rrn >= 0){
-					sem_registro = 0;
-					if(i != nregistros-1)
+					if(sem_registro == 0)
 						printf("\n");
+					sem_registro = 0;
 				}
+				exibir_registro(rrn, 1);
 			}
 		break;
 	}
@@ -474,14 +480,6 @@ int procura_rrn(Ip *iprimary, char pk[TAM_PRIMARY_KEY], int nregistros){
 		return -2;
 	}
 	return registro->rrn;
-}
-
-void insere_indices(int pos, Produto produto, Ip *iprimary, Is *iproduct, Is *ibrand, Isf *iprice, Ir *icategory, int *ncat){
-	insere_iprimary(iprimary, pos, produto);
-	insere_isecondary(iproduct, pos, 1, 0, produto);
-	insere_isecondary(ibrand, pos, 0, 1, produto);
-	insere_iprice(iprice, pos, produto);
-	insere_ireverse(icategory, produto, ncat);
 }
 
 void ordena_indices(int nregistros, Ip *iprimary, Is *iproduct, Is *ibrand, Isf *iprice){
@@ -518,19 +516,19 @@ void gerarChave(Produto *produto){
 Produto ler_entrada(char *registro){
 	Produto novo;
 	// leituras
-	scanf(" %51[^\n]s%*c", novo.nome);
-	scanf(" %51[^\n]s%*c", novo.marca);
+	scanf(" %[^\n]s%*c", novo.nome);
+	scanf(" %[^\n]s%*c", novo.marca);
 	scanf(" %[^\n]s%*c", novo.data);
 	scanf(" %[^\n]s%*c", novo.ano);
 	scanf(" %[^\n]s%*c", novo.preco);
 	scanf(" %[^\n]s%*c", novo.desconto);
-	scanf(" %51[^\n]s%*c", novo.categoria);
+	scanf(" %[^\n]s%*c", novo.categoria);
 	gerarChave(&novo);
 
 	// grava infos em um registro só
 	sprintf(registro, "%s@%s@%s@%s@%s@%s@%s@", novo.nome, novo.marca, novo.data, novo.ano, novo.preco, novo.desconto, novo.categoria);
 	int tam = strlen(registro);
-	while(tam < 192){
+	while(tam < TAM_REGISTRO){
 		registro[tam] = '#';
 		tam++;
 	}
@@ -544,8 +542,8 @@ Produto ler_entrada(char *registro){
 Produto recuperar_registro(int rrn)
 {
 	char temp[193], *p;
-	strncpy(temp, ARQUIVO + ((rrn)*192), 192);
-	temp[192] = '\0';
+	strncpy(temp, ARQUIVO + ((rrn)*TAM_REGISTRO), TAM_REGISTRO);
+	temp[TAM_REGISTRO] = '\0';
 	Produto j;
 	p = strtok(temp,"@");
 	strcpy(j.nome,p);
@@ -581,8 +579,8 @@ char alterar(Ip *iprimary, Isf *iprice, int nregistros){
 		scanf("%s%*c", desconto);
 	}
 
-	int indice = rrn*192;
-	int lim = indice + 192;
+	int indice = rrn*TAM_REGISTRO;
+	int lim = indice + TAM_REGISTRO;
 	int conta_arroba = 0;
 
 	// encontra onde esta o desconto no arquivo
@@ -625,8 +623,8 @@ char remover(Ip *iprimary, int nregistros){
 		return 0;
 	} else {
 		if(registro->rrn != -1){
-			ARQUIVO[(registro->rrn)*192] = '*';
-			ARQUIVO[((registro->rrn)*192)+1] = '|';
+			ARQUIVO[(registro->rrn)*TAM_REGISTRO] = '*';
+			ARQUIVO[((registro->rrn)*TAM_REGISTRO)+1] = '|';
 			registro->rrn = -1;
 		} else {
 			printf(REGISTRO_N_ENCONTRADO);
@@ -637,7 +635,7 @@ char remover(Ip *iprimary, int nregistros){
 }
 
 void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistros, int ncat){
-	int opSearch = 0, rrn, indice, compara, registro = 0;
+	int opSearch = 0, rrn, indice, registro = 0;
 	Ip *registro_p;
 	Is *registro_s;
 	Ir *registro_i;
@@ -645,6 +643,7 @@ void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistro
 	char nome[TAM_NOME] = "";
 	char categoria[TAM_CATEGORIA] = "";
 	char *lista = (char *) malloc ((nregistros*TAM_PRIMARY_KEY)+nregistros+1);
+	memset(lista, 0, sizeof(lista));
 	ll *chaves;
 	scanf("%d%*c", &opSearch);
 	switch(opSearch){
@@ -663,17 +662,18 @@ void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistro
 				printf(REGISTRO_N_ENCONTRADO);
 			else{
 				indice = registro_s - iproduct;
-				while((indice - 1) >= 0 && strcmp(nome, iproduct[indice-1].string) == 0)
+				while((indice - 1) >= 0 && strcmp(nome, (iproduct+indice-1)->string) == 0)
 					indice--;
-				while(strcmp(nome, iproduct[indice].string) == 0){
-					rrn = procura_rrn(iprimary, iproduct[indice].pk, nregistros);
+				while(strcmp(nome, (iproduct+indice)->string) == 0){
+					rrn = procura_rrn(iprimary, (iproduct+indice)->pk, nregistros);
+					if(rrn >= 0){
+						if(registro == 1){
+							printf("\n");
+						}
+						registro = 1;
+					}
 					exibir_registro(rrn, 0);
 					indice++;
-					if(rrn >= 0){
-						registro = 1;
-						if(strcmp(nome, iproduct[indice].string) == 0)
-							printf("\n");
-					}
 				}
 				if(registro == 0)
 					printf(REGISTRO_N_ENCONTRADO);
@@ -687,10 +687,10 @@ void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistro
 				printf(REGISTRO_N_ENCONTRADO);
 			else{
 				indice = (registro_s - ibrand);
-				while((indice - 1) >= 0 && strcmp(nome, ibrand[indice-1].string) == 0)
+				while((indice - 1) >= 0 && strcmp(nome, (ibrand+indice-1)->string) == 0)
 					indice--;
-				while(strcmp(nome, ibrand[indice].string) == 0){
-					strcat(lista, ibrand[indice].pk);
+				while(strcmp(nome, (ibrand+indice)->string) == 0){
+					strcat(lista, (ibrand+indice)->pk);
 					strcat(lista, " ");
 					indice++;
 				}
@@ -702,11 +702,13 @@ void buscar(Ip *iprimary, Is* ibrand, Is* iproduct, Ir *icategory, int nregistro
 					while(chaves != NULL){
 						if(strstr(lista, chaves->pk) != NULL){
 							rrn = procura_rrn(iprimary, chaves->pk, nregistros);
-							exibir_registro(rrn, 0);
-							if(rrn >= 0)
+							if(rrn >= 0){
+								if(registro == 1){
+									printf("\n");
+								}
 								registro = 1;
-							if(chaves->prox!= NULL && strstr(lista, chaves->prox->pk) != NULL)
-								printf("\n");
+							}
+							exibir_registro(rrn, 0);
 						}
 						chaves = chaves->prox;
 					}
@@ -760,9 +762,17 @@ void imprimirSecundario(Is* iproduct, Is* ibrand, Ir* icategory, Isf *iprice, in
 	}
 }
 
-void insere_iprimary(Ip *indice_primario, int pos, Produto p){
+void insere_indices(int pos, int lugar, Produto produto, Ip *iprimary, Is *iproduct, Is *ibrand, Isf *iprice, Ir *icategory, int *ncat){
+	insere_iprimary(iprimary, pos, lugar, produto);
+	insere_isecondary(iproduct, pos, 1, 0, produto);
+	insere_isecondary(ibrand, pos, 0, 1, produto);
+	insere_iprice(iprice, pos, produto);
+	insere_ireverse(icategory, produto, ncat);
+}
+
+void insere_iprimary(Ip *indice_primario, int pos, int lugar, Produto p){
 	strcpy(indice_primario[pos].pk, p.pk);
-	indice_primario[pos].rrn = pos;
+	indice_primario[pos].rrn = lugar;
 }
 
 void insere_isecondary(Is *indice_secundario, int pos, int product, int brand, Produto p){
@@ -773,14 +783,18 @@ void insere_isecondary(Is *indice_secundario, int pos, int product, int brand, P
 		strcpy(indice_secundario[pos].string, p.marca);
 }
 
+
+/* trecho de código recomendado pelos monitores */
 void insere_iprice(Isf *indice_preco, int pos, Produto p){
 	float preco;
 	strcpy(indice_preco[pos].pk, p.pk);
 
-	preco = atof(p.preco) * (100-atof(p.desconto));
+	preco = atof(p.preco) * (100-atof(p.desconto)) / (float)100;
+	preco = preco * 100;
 	preco = ((int) preco)/ (float) 100;
 	indice_preco[pos].price = preco;
 }
+/* fim do trecho */
 
 void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
 	char *cat;
@@ -830,22 +844,22 @@ void insere_ireverse(Ir *indice_reverso, Produto p, int *ncat){
 
 void libera_espaco(int *nregistros){ //olhar memmove (comentado na monitoria)
 	// aqui temos que fazer a leitura do arquivo inteiro para encontrar os *|
-	int index;
+	int index, tamanho;
 	char *sub_arquivo;
 	while((sub_arquivo = strstr(ARQUIVO, "*|")) != NULL){
 		index = (int)(sub_arquivo - ARQUIVO);
-		if(index+192 == strlen(ARQUIVO)){ // se queremos excluir o ultimo
+		if(index+TAM_REGISTRO == strlen(ARQUIVO)){ // se queremos excluir o ultimo
 			memset(ARQUIVO+index, 0, (strlen(ARQUIVO)-index)*sizeof(char));
 		}
 		else{
 			// desloca string
-			for(int i = index + 192; i < (*nregistros)*192; i++){
-				ARQUIVO[i - 192] = ARQUIVO[i];
+			tamanho = strlen(ARQUIVO);
+			for(int i = index + TAM_REGISTRO; i < tamanho; i++){
+				ARQUIVO[i - TAM_REGISTRO] = ARQUIVO[i];
 			}
-			memset(ARQUIVO+(strlen(ARQUIVO)-192), 0, 192*sizeof(char));
+			memset(ARQUIVO+(strlen(ARQUIVO)-TAM_REGISTRO), 0, TAM_REGISTRO*sizeof(char));
 
 		}
-		(*nregistros)--;
 	}
 }
 
