@@ -5,8 +5,8 @@
  *
  * Trabalho 02 - Árvore B
  *
- * RA: 
- * Aluno: 
+ * RA: 620378
+ * Aluno: Giovanna Blasco Martin
  * ========================================================================== */
 
 /* Bibliotecas */
@@ -104,6 +104,7 @@ typedef struct {
 char ARQUIVO[MAX_REGISTROS * TAM_REGISTRO + 1];
 char ARQUIVO_IP[2000*sizeof(Chave_ip)];
 char ARQUIVO_IS[2000*sizeof(Chave_is)];
+
 /* Ordem das arvores */
 int ordem_ip;
 int ordem_is;
@@ -117,45 +118,53 @@ int tamanho_registro_is;
  * ========================= PROTÓTIPOS DAS FUNÇÕES =========================
  * ========================================================================== */
 
-/* ==========================================================================
- * ========================= PROTÓTIPOS DAS FUNÇÕES =========================
- * ========================================================================== */
- 
  /********************FUNÇÕES DO MENU*********************/
  void cadastrar(Indice* iprimary, Indice* ibrand);
- 
+
  int alterar(Indice iprimary);
- 
+
  void buscar(Indice iprimary,Indice ibrand);
- 
+
  void listar(Indice iprimary,Indice ibrand);
- 
+
  /*******************************************************/
- 
+
  /* Recebe do usuário uma string simulando o arquivo completo e retorna o número
   * de registros. */
  int carregar_arquivo();
- 
+
 /* (Re)faz o Cria iprimary*/
 void criar_iprimary(Indice *iprimary);
- 
+
 /* (Re)faz o índice de jogos  */
 void criar_ibrand(Indice *ibrand) ;
- 
+
 /*Escreve um nó da árvore no arquivo de índice,
 * O terceiro parametro serve para informar qual indice se trata */
 void write_btree(void *salvar, int rrn, char ip);
- 
+
 /*Lê um nó do arquivo de índice e retorna na estrutura*/
 void *read_btree(int rrn, char ip);
- 
+
 /* Aloca um nó de árvore para ser utilizado em memória primária, o primeiro parametro serve para informar que árvore se trata
 * É conveniente que essa função também inicialize os campos necessários com valores nulos*/
 void *criar_no(char ip);
- 
+
 /*Libera todos os campos dinâmicos do nó, inclusive ele mesmo*/
 void libera_no(void *node, char ip);
- 
+
+// recupera registro no arquivo de dados a partir do rrn
+Produto recuperar_registro(int rrn);
+
+// le entrada do usuario e devolve uma struct com os dados
+Produto ler_entrada(char *registro);
+
+// gera chave a partir dos dados inseridos
+void gerar_chave(Produto *produto);
+
+// busca rrn no indice primario
+int procura_rrn(Indice* iprimary, char chave[TAM_PRIMARY_KEY]);
+
 /*
 *   Caro aluno,
 *   caso não queira trabalhar com void*, é permitido dividir as funções que utilizam
@@ -165,10 +174,10 @@ void libera_no(void *node, char ip);
 *   void write_btree_ip(node_Btree_ip *salvar, int rrn),  node_Btree_ip *read_btree_ip(int rrn),
 *   void write_btree_is(node_Btree_is *salvar, int rrn) e node_Btree_is *read_btree_is(int rrn).
 */
- 
+
 /* Atualiza os dois índices com o novo registro inserido */
-void inserir_registro_indices(Indice *iprimary, Indice *ibrand, Jogo j);
- 
+void inserir_registro_indices(Indice *iprimary, Indice *ibrand, Produto j);
+
 /* Exibe o jogo */
 int exibir_registro(int rrn);
 
@@ -187,7 +196,7 @@ int main()
 	tamanho_registro_is = ordem_is*3 + 4 + (-1 + ordem_is)* (	TAM_STRING_INDICE +9);
 
 	/* Índice primário */
-	Indice iprimary ;
+	Indice iprimary;
 	criar_iprimary(&iprimary);
 
 	/* Índice secundário de nomes dos Produtos */
@@ -268,6 +277,34 @@ int carregar_arquivo()
 }
 
 
+/* Recupera do arquivo o registro com o rrn
+ * informado e retorna os dados na struct Produto */
+Produto recuperar_registro(int rrn)
+{
+	char temp[193], *p;
+	strncpy(temp, ARQUIVO + ((rrn)*TAM_REGISTRO), TAM_REGISTRO);
+	temp[TAM_REGISTRO] = '\0';
+	Produto j;
+	p = strtok(temp, "@");
+	strcpy(j.pk, p);
+	p = strtok(temp,"@");
+	strcpy(j.nome,p);
+	p = strtok(NULL,"@");
+	strcpy(j.marca,p);
+	p = strtok(NULL,"@");
+	strcpy(j.data,p);
+	p = strtok(NULL,"@");
+	strcpy(j.ano,p);
+	p = strtok(NULL,"@");
+	strcpy(j.preco,p);
+	p = strtok(NULL,"@");
+	strcpy(j.desconto,p);
+	p = strtok(NULL,"@");
+	strcpy(j.categoria,p);
+
+	return j;
+}
+
 /* Exibe o Produto */
 int exibir_registro(int rrn)
 {
@@ -278,7 +315,7 @@ int exibir_registro(int rrn)
 	int desconto;
 	Produto j = recuperar_registro(rrn);
     char *cat, categorias[TAM_CATEGORIA];
-	
+
 	printf("%s\n", j.pk);
 	printf("%s\n", j.nome);
 	printf("%s\n", j.marca);
@@ -290,10 +327,89 @@ int exibir_registro(int rrn)
 	preco = ((int) preco)/ (float) 100 ;
 	printf("%07.2f\n",  preco);
 	strcpy(categorias, j.categoria);
-	
+
 	for (cat = strtok (categorias, "|"); cat != NULL; cat = strtok (NULL, "|"))
     	printf("%s ", cat);
 	printf("\n");
 
 	return 1;
+}
+
+Produto ler_entrada(char *registro){
+	Produto novo;
+	// leituras
+	scanf(" %[^\n]s%*c", novo.nome);
+	scanf(" %[^\n]s%*c", novo.marca);
+	scanf(" %[^\n]s%*c", novo.data);
+	scanf(" %[^\n]s%*c", novo.ano);
+	scanf(" %[^\n]s%*c", novo.preco);
+	scanf(" %[^\n]s%*c", novo.desconto);
+	scanf(" %[^\n]s%*c", novo.categoria);
+	gerar_chave(&novo);
+
+	// grava infos em um registro só
+	sprintf(registro, "%s@%s@%s@%s@%s@%s@%s@%s@", novo.pk, novo.nome, novo.marca, novo.data, novo.ano, novo.preco, novo.desconto, novo.categoria);
+	int tam = strlen(registro);
+	while(tam < TAM_REGISTRO){
+		registro[tam] = '#';
+		tam++;
+	}
+	registro[tam] = '\0';
+
+	return novo;
+}
+
+// gera a chave a partir dos dados recuperados do registro
+void gerar_chave(Produto *produto){
+	char chave[11] = "";
+	strncpy(chave, produto->nome, 2);
+	char marca[3] = "";
+	strncpy(marca, produto->marca, 2);
+	strcat(chave, marca);
+	char data[11] = "";
+	strcpy(data, produto->data);
+	strcat(chave, strtok(data, "/"));
+	strcat(chave, strtok(NULL, "/"));
+	strcat(chave, produto->ano);
+	strcat(chave, "\0");
+
+	// salva a chave gerada na pk do produto
+	strcpy(produto->pk, chave);
+}
+
+void criar_iprimary(Indice *iprimary){
+	for(int i = 0; i < nregistros; i++){
+
+	}
+}
+
+void criar_ibrand(Indice *ibrand){
+
+}
+
+void cadastrar(Indice* iprimary, Indice* ibrand){
+	Produto p;
+	char novo_produto[193] = "";
+
+	p = ler_entrada(novo_produto);
+}
+
+void inserir_registro_indices(Indice *iprimary, Indice *ibrand, Produto j){
+
+}
+
+int procura_rrn(Indice* iprimary, char chave[TAM_PRIMARY_KEY]){
+
+}
+
+int alterar(Indice iprimary){
+
+}
+
+void buscar(Indice iprimary,Indice ibrand){
+
+}
+
+void listar(Indice iprimary,Indice ibrand){
+	
 }
