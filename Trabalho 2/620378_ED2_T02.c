@@ -133,34 +133,35 @@ int tamanho_registro_is;
   * de registros. */
  int carregar_arquivo();
 
-/* (Re)faz o Cria iprimary*/
-void criar_iprimary(Indice *iprimary);
-
-/* (Re)faz o índice de jogos  */
-void criar_ibrand(Indice *ibrand) ;
+/* (Re)faz o índice */
+void criar_indices(Indice *iprimary, Indice *ibrand);
 
 /*Escreve um nó da árvore no arquivo de índice,
 * O terceiro parametro serve para informar qual indice se trata */
-void write_btree(void *salvar, int rrn, char ip);
+void write_btree_ip(node_Btree_ip *salvar, int rrn);
+void write_btree_is(node_Btree_is *salvar, int rrn);
 
 /*Lê um nó do arquivo de índice e retorna na estrutura*/
-void *read_btree(int rrn, char ip);
+node_Btree_ip *read_btree_ip(int rrn); //feito
+node_Btree_is *read_btree_is(int rrn); //feito
 
 /* Aloca um nó de árvore para ser utilizado em memória primária, o primeiro parametro serve para informar que árvore se trata
 * É conveniente que essa função também inicialize os campos necessários com valores nulos*/
-void *criar_no(char ip);
+node_Btree_ip *criar_no_ip(); //feito
+node_Btree_is *criar_no_is(); //feito
 
 /*Libera todos os campos dinâmicos do nó, inclusive ele mesmo*/
-void libera_no(void *node, char ip);
+void libera_no_ip(node_Btree_ip ip);
+void libera_no_is(node_Btree_is is);
 
 // recupera registro no arquivo de dados a partir do rrn
-Produto recuperar_registro(int rrn);
+Produto recuperar_registro(int rrn); //feito
 
 // le entrada do usuario e devolve uma struct com os dados
-Produto ler_entrada(char *registro);
+Produto ler_entrada(char *registro); //feito
 
 // gera chave a partir dos dados inseridos
-void gerar_chave(Produto *produto);
+void gerar_chave(Produto *produto); //feito
 
 // busca rrn no indice primario
 int procura_rrn(Indice* iprimary, char chave[TAM_PRIMARY_KEY]);
@@ -176,7 +177,7 @@ int procura_rrn(Indice* iprimary, char chave[TAM_PRIMARY_KEY]);
 */
 
 /* Atualiza os dois índices com o novo registro inserido */
-void inserir_registro_indices(Indice *iprimary, Indice *ibrand, Produto j);
+void insere_registro_indices(Indice *iprimary, Indice *ibrand, Produto p, int rrn);
 
 /* Exibe o jogo */
 int exibir_registro(int rrn);
@@ -377,14 +378,153 @@ void gerar_chave(Produto *produto){
 	strcpy(produto->pk, chave);
 }
 
-void criar_iprimary(Indice *iprimary){
-	for(int i = 0; i < nregistros; i++){
+node_Btree_ip *read_btree_ip(int rrn){
+	char node[193] = "", qtd[4] = "", rrn[5] = "", desc[4] = "";
+	int pos = 0;
+	strncpy(node, ARQUIVO_IP+(tamanho_registro_ip*rrn), tamanho_registro_ip);
 
+	node_Btree_ip *no_ip;
+	no_ip = criar_no_ip();
+	strncpy(qtd, node+pos, 3);
+
+	no_ip->num_chaves = atoi(qtd);
+	pos += 3;
+
+	for(int i = 0; i < no_ip->num_chaves; i++){
+		strncpy(no_ip->chaves[i].pk, node+pos, 10);
+		strncpy(rrn, node+pos+10, 4);
+		no_ip->chaves[i].rrn = atoi(rrn);
+		pos += 14;
+	}
+	pos = 3+(ordem_ip-1)*14;
+
+	no_ip->folha = node[pos];
+	pos++;
+
+	for(int i = 0; i < no_ip->num_chaves; i++){
+		if(node[pos] != '*'){
+			strncpy(desc, node+pos, 3);
+			no_ip->desc[i] = atoi(desc);
+		} else
+			no_ip->desc[i] = -1;
+		pos += 3;
+	}
+
+	return no_ip;
+}
+
+node_Btree_is *read_btree_is(int rrn){
+	char node[193] = "", qtd[4] = "", string[102] = "", desc[4] = "";
+	char aux;
+	int pos = 0;
+	strncpy(node, ARQUIVO_IS+(tamanho_registro_is*rrn), tamanho_registro_is);
+
+	node_Btree_is *no_is;
+	no_is = criar_no_is();
+	strncpy(qtd, node+pos, 3);
+
+	no_is->num_chaves = atoi(qtd);
+	pos += 3;
+
+	for(int i = 0; i < no_is->num_chaves; i++){
+		strncpy(no_is->chaves[i].pk, node+pos, 10);
+		no_is->chaves[i].string = strtok(node+pos+10, "#");
+		pos += 111;
+	}
+	pos = 3+(ordem_is-1)*111;
+
+	no_is->folha = node[pos];
+	pos++;
+
+	for(int i = 0; i < no_is->num_chaves; i++){
+		if(node[pos] != '*'){
+			strncpy(desc, node+pos, 3);
+			no_is->desc[i] = atoi(desc);
+		pos += 3;
+	}
+
+	return no_is;
+}
+
+void write_btree_ip(node_Btree_ip *salvar, int rrn){
+
+}
+
+void write_btree_is(node_Btree_is *salvar, int rrn){
+
+}
+
+node_Btree_ip *criar_no_ip(){
+	Chave_ip * chaves = (Chave_ip *) malloc (sizeof(Chave_ip) * (ordem_ip-1));
+	for(int i = 0; i < ordem_ip-1; i++){
+		memset(chaves[i].pk, 0, TAM_PRIMARY_KEY);
+		chaves[i].rrn = 0;
+	}
+	int * descendentes = (int *) malloc (sizeof(int) * ordem_ip);
+	for(int i = 0; i < ordem_ip; i++){
+		descendentes[i] = -1;
+	}
+	node_Btree_ip * no_ip = (node_Btree_ip *) malloc (sizeof(node_Btree_ip));
+	no_ip->num_chaves = 0;
+	no_ip->chave = chaves;
+	no_ip->desc = descendentes;
+	no_ip->folha = 'F';
+
+	return no_ip;
+}
+
+node_Btree_is *criar_no_is(){
+	Chave_is * chaves = (Chave_is *) malloc (sizeof(Chave_is) * (ordem_is-1));
+	for(int i = 0; i < ordem_is-1; i++){
+		memset(chaves[i].pk, 0, TAM_PRIMARY_KEY);
+		memset(chaves[i].string, 0, TAM_STRING_INDICE);
+	}
+	int * descendentes = (int *) malloc (sizeof(int) * ordem_is);
+	for(int i = 0; i < ordem_is; i++){
+		descendentes[i] = -1;
+	}
+	node_Btree_is * no_is = (node_Btree_is *) malloc (sizeof(node_Btree_is));
+	no_is->num_chaves = 0;
+	no_is->chave = chaves;
+	no_is->desc = descendentes;
+	no_is->folha = 'F';
+
+	return no_is;
+}
+
+void criar_indices(Indice *iprimary, Indice *ibrand){
+	Produto p;
+
+	for(int i = 0; i < nregistros; i++){
+		p = recuperar_registro(i);
+		insere_registro_indices(iprimary, ibrand, p, rrn);
 	}
 }
 
-void criar_ibrand(Indice *ibrand){
+void insere_registro_indices(Indice *iprimary, Indice *ibrand, Produto p, int rrn){
+	node_Btree_ip *no_ip;
+	node_Btree_is *no_is;
+	if(strlen(ARQUIVO_IP) == 0){ // cria nó raiz ip
+		iprimary.raiz = 0;
+		no_ip = criar_no_ip();
+		strcpy(no_ip->chave[0].pk, p.pk);
+		no_ip->chave[0].rrn = rrn;
+		write_btree_ip(no_ip, 0);
+	} else {
 
+
+	}
+	if(strlen(ARQUIVO_IS) == 0){ // cria nó raiz is
+		ibrand.raiz = 0;
+		no_is = criar_no_is();
+		strcpy(no_is->chave[0].pk, p.pk);
+		strcat(no_is->chave[0].string, p.nome);
+		strcat(no_is->chave[0].string, "$");
+		strcat(no_is->chave[0].string, p.marca);
+		write_btree_is(no_is, 0);
+	} else {
+
+	}
 }
 
 void cadastrar(Indice* iprimary, Indice* ibrand){
@@ -392,10 +532,24 @@ void cadastrar(Indice* iprimary, Indice* ibrand){
 	char novo_produto[193] = "";
 
 	p = ler_entrada(novo_produto);
+
+	// se ja existe, não cadastra novamente
+	if(procura_rrn(iprimary, p.pk)){
+		printf(ERRO_PK_REPETIDA, p.pk);
+		return;
+	}
+
+	inserir_registro_indices(iprimary, ibrand, p);
+
+	// insere entrada no arquivo de dados
+	strcat(ARQUIVO, novo_produto);
+	nregistros++;
 }
 
 void inserir_registro_indices(Indice *iprimary, Indice *ibrand, Produto j){
 
+	nregistrosip++;
+	nregistrosis++;
 }
 
 int procura_rrn(Indice* iprimary, char chave[TAM_PRIMARY_KEY]){
@@ -411,5 +565,5 @@ void buscar(Indice iprimary,Indice ibrand){
 }
 
 void listar(Indice iprimary,Indice ibrand){
-	
+
 }
