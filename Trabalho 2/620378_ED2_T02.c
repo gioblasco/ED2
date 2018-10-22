@@ -525,6 +525,9 @@ void insere_registro_indices(Indice *iprimary, Indice *ibrand, Produto p, int rr
 	} else {
 
 	}
+
+	nregistrosip++;
+	nregistrosis++;
 }
 
 void cadastrar(Indice* iprimary, Indice* ibrand){
@@ -539,17 +542,11 @@ void cadastrar(Indice* iprimary, Indice* ibrand){
 		return;
 	}
 
-	inserir_registro_indices(iprimary, ibrand, p);
+	insere_registro_indices(iprimary, ibrand, p, nregistros);
 
 	// insere entrada no arquivo de dados
 	strcat(ARQUIVO, novo_produto);
 	nregistros++;
-}
-
-void inserir_registro_indices(Indice *iprimary, Indice *ibrand, Produto j){
-
-	nregistrosip++;
-	nregistrosis++;
 }
 
 int procura_rrn(Indice* iprimary, char chave[TAM_PRIMARY_KEY]){
