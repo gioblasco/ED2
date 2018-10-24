@@ -4,11 +4,12 @@
 #include <string.h>
 
 int main(){
-  char qtd[5] = "0099";
+  char qtd[40] = "giovannablascomartin";
+  char over[20] = "mateus";
   int num;
 
-  num = atoi(qtd+3);
-  printf("%d\n", num);
+  memmove(qtd+5, over, strlen(over));
+  printf("%s\n", qtd);
 
 
   return 0;
