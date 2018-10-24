@@ -949,9 +949,9 @@ int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
 	if (no_ip == NULL)
 		return -1;
 
-	if(no_ip->folha == 'F')
-		printf("\n");
-	printf("%s", no_ip->chave[aux].pk);
+	if(print){
+		printf("%s", no_ip->chave[aux].pk);
+	}
 
 	while (aux < no_ip->num_chaves && strcmp(chave, no_ip->chave[aux].pk) > 0){
 		if(print){
@@ -977,6 +977,8 @@ int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
 	}else{
 		rrn_res = no_ip->desc[aux];
 		libera_no_ip(no_ip);
+		if(print)
+			printf("\n");
 		buscar_ip(rrn_res, chave, print);
 	}
 }
@@ -990,7 +992,8 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 	if(no_is == NULL)
 		return "";
 
-	printf("%s", no_is->chave[aux].string);
+	if(print)
+		printf("%s", no_is->chave[aux].string);
 
 	while (aux < no_is->num_chaves && strcmp(marca, no_is->chave[aux].string) > 0){
 		if(print){
@@ -1017,7 +1020,8 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 	} else {
 		rrn_res = no_is->desc[aux];
 		libera_no_is(no_is);
-		printf("\n");
+		if(print)
+			printf("\n");
 		buscar_is(rrn_res, marca, print);
 	}
 }
