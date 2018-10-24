@@ -179,6 +179,9 @@ void insere_registro_is(int *ibrand, Chave_is *chave);
 int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print);
 char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print);
 
+int listar_ip(int raiz, int *nivel);
+int listar_is(int raiz);
+
 int main()
 {
 	char *p; /* # */
@@ -1027,6 +1030,27 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 }
 
 void listar(int iprimary, int ibrand){
+	int opList = 0;
+	int nivel = 1;
+	scanf("%d%*c", &opList);
+	switch(opList){
+		case 1:
+			listar_ip(iprimary, &nivel);
+		break;
+		case 2:
+			listar_is(ibrand);
+		break;
+	}
+}
+
+void listar_ip(int raiz, int *nivel){
+	node_Btree_ip *no_ip;
+	no_ip = read_btree_ip(raiz);
+	printf("%d - ", nivel);
+
+}
+
+void listar_is(int raiz){
 
 }
 
