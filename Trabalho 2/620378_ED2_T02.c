@@ -704,8 +704,7 @@ int insere_registro_aux_ip(int rrn_inicial, Chave_ip *chave){
 				no_ip->desc[i+2] = rrn_filhodireito;
 				no_ip->num_chaves += 1;
 
-				write_btree_ip(no_ip, nregistrosip);
-				nregistrosip++;
+				write_btree_ip(no_ip, rrn_inicial);
 				libera_no_ip(no_ip);
 				return -1;
 			}
@@ -764,8 +763,7 @@ int insere_registro_aux_is(int rrn_inicial, Chave_is *chave){
 				no_is->desc[i+2] = rrn_filhodireito;
 				no_is->num_chaves += 1;
 
-				write_btree_is(no_is, nregistrosis);
-				nregistrosis++;
+				write_btree_is(no_is, rrn_inicial);
 				libera_no_is(no_is);
 				return -1;
 			}
@@ -1071,6 +1069,7 @@ void listar_ip(int raiz, int nivel){
 
 void listar_is(int raiz){
 	node_Btree_is *no_is;
+	char string[TAM_STRING_INDICE];
 	if(nregistrosis == 0){
 		printf(REGISTRO_N_ENCONTRADO);
 		return;
@@ -1080,7 +1079,14 @@ void listar_is(int raiz){
 		if(no_is->desc[i] != -1)
 			listar_is(no_is->desc[i]);
 		if(i < no_is->num_chaves){
-			printf("%s ", strtok(no_is->chave[i].string, "$"));
+			strcpy(string, strtok(no_is->chave[i].string, "$"));
+			printf("%s", string);
+			for(int i = strlen(string); i < 50; i++)
+				printf("-");
+			strcpy(string, no_is->chave[i].string+strlen(string)+1);
+			printf(" %s", string);
+			for(int i = strlen(string); i < 50; i++)
+				printf("-");
 			printf("\n");
 		}
 	}
