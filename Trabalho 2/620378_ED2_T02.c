@@ -9,12 +9,13 @@
  * Aluno: Giovanna Blasco Martin
  * ========================================================================== */
 
+ // Erros: 10, 12, 13, 14, 15, 16, 18
+
 /* Bibliotecas */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include <math.h>
 
 /* Tamanho dos campos dos registros */
 #define TAM_PRIMARY_KEY 11
@@ -453,29 +454,28 @@ void write_btree_ip(node_Btree_ip *salvar, int rrn){
 	int max;
 	if(salvar == NULL)
 		return;
-
+	memset(registro, 0, tamanho_registro_ip);
 	sprintf(registro, "%03d", salvar->num_chaves);
 	for(int i = 0; i < salvar->num_chaves; i++){
 		strcat(registro, salvar->chave[i].pk);
 		sprintf(rrn_chave, "%04d", salvar->chave[i].rrn);
 		strcat(registro, rrn_chave);
 	}
-	max = (ordem_ip-1-salvar->num_chaves-1);
-	for(int i = salvar->num_chaves-1; i <= max; i++)
+	for(int i = salvar->num_chaves; i < ordem_ip-1; i++)
 		strcat(registro, "##############");
 
   ehfolha[0] = salvar->folha;
 	strcat(registro, ehfolha);
 	for(int j = 0; j < ordem_ip; j++){
-		if(salvar->desc[j] == -1){
+		if(salvar->desc[j] == -1 || (j >= salvar->num_chaves+1)){
 			strcat(registro, "***");
-		} else {
+		} else if (salvar->desc[j] != -1){
 			sprintf(folha, "%03d", salvar->desc[j]);
 			strcat(registro, folha);
 		}
 	}
 
-	memmove(ARQUIVO_IP+(rrn*tamanho_registro_ip), registro, strlen(registro));
+	memmove(ARQUIVO_IP+(rrn*tamanho_registro_ip), registro, tamanho_registro_ip);
 }
 
 void write_btree_is(node_Btree_is *salvar, int rrn){
@@ -483,7 +483,7 @@ void write_btree_is(node_Btree_is *salvar, int rrn){
 	int max;
 	if(salvar == NULL)
 		return;
-
+	memset(registro, 0, tamanho_registro_is);
 	sprintf(registro, "%03d", salvar->num_chaves);
 	for(int i = 0; i < salvar->num_chaves; i++){
 		strcat(registro, salvar->chave[i].pk);
@@ -493,23 +493,22 @@ void write_btree_is(node_Btree_is *salvar, int rrn){
 			strcat(registro, "#");
 		}
 	}
-	max = (ordem_is-1-salvar->num_chaves-1);
-	for(int i = salvar->num_chaves-1; i <= max; i++)
+	for(int i = salvar->num_chaves; i < ordem_is-1; i++)
 		for(int j = 0; j < 111; j++)
 			strcat(registro, "#");
 
 	ehfolha[0] = salvar->folha;
 	strcat(registro, ehfolha);
 	for(int j = 0; j < ordem_is; j++){
-		if(salvar->desc[j] == -1){
+		if(salvar->desc[j] == -1 || (j >= salvar->num_chaves+1)){
 			strcat(registro, "***");
-		} else {
+		} else if(salvar->desc[j] != -1) {
 			sprintf(folha, "%03d", salvar->desc[j]);
 			strcat(registro, folha);
 		}
 	}
 
-	memmove(ARQUIVO_IS+(rrn*tamanho_registro_is), registro, strlen(registro));
+	memmove(ARQUIVO_IS+(rrn*tamanho_registro_is), registro, tamanho_registro_is);
 }
 
 node_Btree_ip *criar_no_ip(){
@@ -787,7 +786,7 @@ int divide_no_ip(int rrn_inicial, Chave_ip *chave, int rrn_filhodireito){
 		i = no_ip->num_chaves-1;
 		novo_no = criar_no_ip();
 		novo_no->folha = no_ip->folha;
-		novo_no->num_chaves = floor((ordem_ip-1)/2);
+		novo_no->num_chaves = (ordem_ip-1)/2;
 
 		for(int j = novo_no->num_chaves-1; j >= 0; j--){
 			if(!chave_alocada && strcmp(chave->pk, no_ip->chave[i].pk) > 0){
@@ -811,9 +810,9 @@ int divide_no_ip(int rrn_inicial, Chave_ip *chave, int rrn_filhodireito){
 			no_ip->desc[i+2] = rrn_filhodireito;
 		}
 
-		(*chave) = no_ip->chave[(int)floor(ordem_ip/2)];
-		novo_no->desc[0] = no_ip->desc[(int)floor(ordem_ip/2)+1];
-		no_ip->num_chaves = floor(ordem_ip/2);
+		(*chave) = no_ip->chave[ordem_ip/2];
+		novo_no->desc[0] = no_ip->desc[(ordem_ip/2)+1];
+		no_ip->num_chaves = ordem_ip/2;
 
 		write_btree_ip(no_ip, rrn_inicial);
 		write_btree_ip(novo_no, nregistrosip);
@@ -832,7 +831,7 @@ int divide_no_is(int rrn_inicial, Chave_is *chave, int rrn_filhodireito){
 		i = no_is->num_chaves-1;
 		novo_no = criar_no_is();
 		novo_no->folha = no_is->folha;
-		novo_no->num_chaves = floor((ordem_is-1)/2);
+		novo_no->num_chaves = (ordem_is-1)/2;
 
 		for(int j = novo_no->num_chaves-1; j >= 0; j--){
 			if(!chave_alocada && strcmp(chave->string, no_is->chave[i].string) > 0){
@@ -856,9 +855,9 @@ int divide_no_is(int rrn_inicial, Chave_is *chave, int rrn_filhodireito){
 			no_is->desc[i+2] = rrn_filhodireito;
 		}
 
-		(*chave) = no_is->chave[(int)floor(ordem_ip/2)];
-		novo_no->desc[0] = no_is->desc[(int)floor(ordem_ip/2)+1];
-		no_is->num_chaves = floor(ordem_ip/2);
+		(*chave) = no_is->chave[ordem_is/2];
+		novo_no->desc[0] = no_is->desc[(ordem_is/2)+1];
+		no_is->num_chaves = ordem_is/2;
 
 		write_btree_is(no_is, rrn_inicial);
 		write_btree_is(novo_no, nregistrosis);
@@ -947,7 +946,7 @@ void buscar(int iprimary, int ibrand){
 }
 
 int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
-	int aux = 0, rrn_res;
+	int aux = 0, rrn_res, pos;
 
 	node_Btree_ip *no_ip;
 
@@ -967,9 +966,15 @@ int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
 		aux++;
 	}
 
+	pos = aux;
+	if(aux+1 < no_ip->num_chaves)
+		pos++;
+
 	if(print){
-		if(aux != 0)
-			printf(", %s", no_ip->chave[aux].pk);
+		while(pos < no_ip->num_chaves && pos != 0){
+			printf(", %s", no_ip->chave[pos].pk);
+			pos++;
+		}
 	}
 
 	if (aux < no_ip->num_chaves && strcmp(chave, no_ip->chave[aux].pk) == 0){
@@ -991,7 +996,7 @@ int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
 }
 
 char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
-	int aux = 0, rrn_res;
+	int aux = 0, rrn_res, pos;
 	char *pk_res;
 
 	node_Btree_is *no_is;
@@ -1010,9 +1015,15 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 		aux++;
 	}
 
+	pos = aux;
+	if(aux+1 < no_is->num_chaves)
+		pos++;
+
 	if(print){
-		if(aux != 0)
-			printf(", %s", no_is->chave[aux].string);
+		while(pos < no_is->num_chaves && pos != 0){
+			printf(", %s", no_is->chave[pos].string);
+			pos++;
+		}
 	}
 
 	if (aux < no_is->num_chaves && strcmp(marca, no_is->chave[aux].string) == 0){
@@ -1077,7 +1088,7 @@ void listar_is(int raiz){
 		return;
 	}
 	no_is = read_btree_is(raiz);
-	for(int i = 0; i < ordem_ip; i++){
+	for(int i = 0; i < ordem_is; i++){
 		if(no_is->desc[i] != -1)
 			listar_is(no_is->desc[i]);
 		if(i < no_is->num_chaves){
