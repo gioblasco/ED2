@@ -179,8 +179,8 @@ void insere_registro_is(int *ibrand, Chave_is *chave);
 int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print);
 char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print);
 
-int listar_ip(int raiz, int *nivel);
-int listar_is(int raiz);
+void listar_ip(int raiz, int *nivel);
+void listar_is(int raiz);
 
 int main()
 {
