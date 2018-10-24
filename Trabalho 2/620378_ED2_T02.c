@@ -967,11 +967,12 @@ int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
 		aux++;
 	}
 
+	if(print){
+		if(aux != 0)
+			printf(", %s", no_ip->chave[aux].pk);
+	}
+
 	if (aux < no_ip->num_chaves && strcmp(chave, no_ip->chave[aux].pk) == 0){
-		if(print){
-			if(aux != 0)
-				printf(", %s", no_ip->chave[aux].pk);
-		}
 		rrn_res = no_ip->chave[aux].rrn;
 		libera_no_ip(no_ip);
 		return rrn_res;
@@ -1009,11 +1010,12 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 		aux++;
 	}
 
+	if(print){
+		if(aux != 0)
+			printf(", %s", no_is->chave[aux].string);
+	}
+
 	if (aux < no_is->num_chaves && strcmp(marca, no_is->chave[aux].string) == 0){
-		if(print){
-			if(aux != 0)
-				printf(", %s", no_is->chave[aux].string);
-		}
 		pk_res = (char *) malloc (sizeof(char) * TAM_PRIMARY_KEY);
 		sprintf(pk_res, "%s", no_is->chave[aux].pk);
 		libera_no_is(no_is);
