@@ -97,10 +97,6 @@ typedef struct nodeis
 	char folha;			/* flag folha da arvore*/
 } node_Btree_is;
 
-typedef struct {
-	int raiz;
-} Indice;
-
 /* Variáveis globais */
 char ARQUIVO[MAX_REGISTROS * TAM_REGISTRO + 1];
 char ARQUIVO_IP[2000*sizeof(Chave_ip)];
@@ -179,7 +175,7 @@ void insere_registro_is(int *ibrand, Chave_is *chave);
 int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print);
 char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print);
 
-void listar_ip(int raiz, int *nivel);
+void listar_ip(int raiz, int nivel);
 void listar_is(int raiz);
 
 int main()
@@ -453,7 +449,7 @@ node_Btree_is *read_btree_is(int rrn){
 }
 
 void write_btree_ip(node_Btree_ip *salvar, int rrn){
-	char registro[tamanho_registro_ip], rrn_chave[5], ehfolha[2], folha[4];
+	char registro[tamanho_registro_ip], rrn_chave[5], ehfolha[2] = "", folha[4];
 	int max;
 	if(salvar == NULL)
 		return;
@@ -483,7 +479,7 @@ void write_btree_ip(node_Btree_ip *salvar, int rrn){
 }
 
 void write_btree_is(node_Btree_is *salvar, int rrn){
-	char registro[tamanho_registro_is], ehfolha[2], folha[4];
+	char registro[tamanho_registro_is], ehfolha[2] = "", folha[4];
 	int max;
 	if(salvar == NULL)
 		return;
@@ -684,6 +680,7 @@ int insere_registro_aux_ip(int rrn_inicial, Chave_ip *chave){
 			libera_no_ip(no_ip);
 			return -1;
 		} else {
+			libera_no_ip(no_ip);
 			return divide_no_ip(rrn_inicial, chave, -1);
 		}
 	} else {
@@ -712,10 +709,13 @@ int insere_registro_aux_ip(int rrn_inicial, Chave_ip *chave){
 				libera_no_ip(no_ip);
 				return -1;
 			}
-			else
+			else {
+				libera_no_ip(no_ip);
 				return divide_no_ip(rrn_inicial, chave, rrn_filhodireito);
-		} else
+			}
+		} else {
 			return -1;
+		}
 	}
 }
 
@@ -740,6 +740,7 @@ int insere_registro_aux_is(int rrn_inicial, Chave_is *chave){
 			libera_no_is(no_is);
 			return -1;
 		} else {
+			libera_no_is(no_is);
 			return divide_no_is(rrn_inicial, chave, -1);
 		}
 	} else {
@@ -768,10 +769,14 @@ int insere_registro_aux_is(int rrn_inicial, Chave_is *chave){
 				libera_no_is(no_is);
 				return -1;
 			}
-			else
+			else{
+				libera_no_is(no_is);
 				return divide_no_is(rrn_inicial, chave, rrn_filhodireito);
-		} else
+			}
+		} else {
+			libera_no_is(no_is);
 			return -1;
+		}
 	}
 }
 
@@ -1031,11 +1036,10 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 
 void listar(int iprimary, int ibrand){
 	int opList = 0;
-	int nivel = 1;
 	scanf("%d%*c", &opList);
 	switch(opList){
 		case 1:
-			listar_ip(iprimary, &nivel);
+			listar_ip(iprimary, 1);
 		break;
 		case 2:
 			listar_is(ibrand);
@@ -1043,15 +1047,44 @@ void listar(int iprimary, int ibrand){
 	}
 }
 
-void listar_ip(int raiz, int *nivel){
+void listar_ip(int raiz, int nivel){
 	node_Btree_ip *no_ip;
+	if(nregistrosip == 0){
+		printf(REGISTRO_N_ENCONTRADO);
+		return;
+	}
 	no_ip = read_btree_ip(raiz);
 	printf("%d - ", nivel);
-
+	for(int i = 0; i < no_ip->num_chaves; i++){
+		if(i != 0)
+			printf(", ");
+		printf("%s", no_ip->chave[i].pk);
+	}
+	printf("\n");
+	if(no_ip->folha == 'N'){
+		for(int j = 0; j < ordem_ip; j++)
+			if(no_ip->desc[j] != -1)
+				listar_ip(no_ip->desc[j], nivel+1);
+	}
+	libera_no_ip(no_ip);
 }
 
 void listar_is(int raiz){
-
+	node_Btree_is *no_is;
+	if(nregistrosis == 0){
+		printf(REGISTRO_N_ENCONTRADO);
+		return;
+	}
+	no_is = read_btree_is(raiz);
+	for(int i = 0; i < ordem_ip; i++){
+		if(no_is->desc[i] != -1)
+			listar_is(no_is->desc[i]);
+		if(i < no_is->num_chaves){
+			printf("%s ", strtok(no_is->chave[i].string, "$"));
+			printf("\n");
+		}
+	}
+	libera_no_is(no_is);
 }
 
 void libera_no_ip(node_Btree_ip *ip){
