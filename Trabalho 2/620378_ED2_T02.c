@@ -9,8 +9,6 @@
  * Aluno: Giovanna Blasco Martin
  * ========================================================================== */
 
- // Erros: 10, 12, 13, 14, 15, 16, 18
-
 /* Bibliotecas */
 #include <stdio.h>
 #include <stdlib.h>
@@ -967,7 +965,7 @@ int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
 	}
 
 	pos = aux;
-	if(aux+1 < no_ip->num_chaves)
+	if(aux == 0)
 		pos++;
 
 	if(print){
@@ -1016,7 +1014,7 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 	}
 
 	pos = aux;
-	if(aux+1 < no_is->num_chaves)
+	if(aux == 0)
 		pos++;
 
 	if(print){
