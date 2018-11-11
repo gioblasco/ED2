@@ -723,6 +723,7 @@ int insere_registro_aux_ip(int rrn_inicial, Chave_ip *chave){
 				return divide_no_ip(rrn_inicial, chave, rrn_filhodireito);
 			}
 		} else {
+			libera_no_ip(no_ip);
 			return -1;
 		}
 	}
@@ -923,6 +924,7 @@ int alterar(int iprimary){
 void buscar(int iprimary, int ibrand){
 	int opSearch = 0, rrn;
 	char pk[TAM_PRIMARY_KEY], marca[TAM_STRING_INDICE], nome[TAM_NOME];
+	char *aux;
 
 	memset(pk, 0, TAM_PRIMARY_KEY);
 	memset(marca, 0, TAM_STRING_INDICE);
@@ -947,7 +949,9 @@ void buscar(int iprimary, int ibrand){
 			strcat(marca, "$");
 			strcat(marca, nome);
 			printf(NOS_PERCORRIDOS_IS, marca);
-			strcpy(pk, buscar_is(ibrand, marca, 1));
+			aux = buscar_is(ibrand, marca, 1);
+			strcpy(pk, aux);
+			free(aux);
 			printf("\n\n");
 			if(!strcmp(pk, "")){
 				printf(REGISTRO_N_ENCONTRADO);
