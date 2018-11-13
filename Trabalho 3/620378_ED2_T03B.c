@@ -59,7 +59,7 @@ typedef struct {
 	char preco[TAM_PRECO];
 	char desconto[TAM_DESCONTO];
 	char categoria[TAM_CATEGORIA];
-} Jogo;
+} Produto;
 
 /* Registro da Tabela Hash
  * Contém a chave primária, o RRN do registro atual e o ponteiro para o próximo
@@ -73,7 +73,7 @@ typedef struct chave {
 /* Estrutura da Tabela Hash */
 typedef struct {
   int tam;
-  Chave **v;
+  Chave **v; // qual o tamanho maximo disso?
 } Hashtable;
 
 /* Variáveis globais */
@@ -85,7 +85,7 @@ int nregistros;
  * ========================================================================== */
 
 /* Recebe do usuário uma string simulando o arquivo completo. */
-void carregar_arquivo();
+int carregar_arquivo();
 
 
 /* Exibe o jogo */
@@ -110,6 +110,12 @@ int  remover(Hashtable* tabela);
 void liberar_tabela(Hashtable* tabela);
 
 /* <<< DECLARE AQUI OS PROTOTIPOS >>> */
+void criar_tabela(Hashtable *tabela, int tam);
+Produto recuperar_registro(int rrn);
+void gerar_chave(Produto *produto);
+Produto ler_entrada(char *registro);
+int buscar_rrn(Hashtable tabela, char *pk);
+void imprimir_tabela(Hashtable tabela);
 
 
 /* ==========================================================================
@@ -123,7 +129,7 @@ int main()
 	int carregarArquivo = 0;
 	scanf("%d%*c", &carregarArquivo); // 1 (sim) | 0 (nao)
 	if (carregarArquivo)
-		carregar_arquivo();
+		nregistros = carregar_arquivo();
 
 	/* Tabela Hash */
 	int tam;
@@ -168,12 +174,12 @@ int main()
 		case 6:
 			liberar_tabela(&tabela);
 			break;
-
+		/*
 		case 10:
 			printf(INICIO_ARQUIVO);
 			printf("%s\n", (*ARQUIVO!='\0') ? ARQUIVO : ARQUIVO_VAZIO);
 			break;
-
+		*/
 		default:
 			printf(OPCAO_INVALIDA);
 			break;
@@ -186,14 +192,39 @@ int main()
 /* <<< IMPLEMENTE AQUI AS FUNCOES >>> */
 
 /* Recebe do usuário uma string simulando o arquivo completo. */
-void carregar_arquivo() {
+int carregar_arquivo() {
 	scanf("%[^\n]\n", ARQUIVO);
+
+	return strlen(ARQUIVO)/TAM_REGISTRO;
+}
+
+short hash(const char* chave, int tam){
+
 }
 
 /*Auxiliar para a função de hash*/
 short f(char x)
 {
 	return (x < 59) ? x - 48 : x - 54;
+}
+
+int prox_primo(int a){
+	int i, primo;
+	if((a <= 1) || ((a % 2 == 0) && a > 2))
+		a++;
+	while(1){
+		primo = 1;
+		for(i = 3; i <= floor(sqrt(a)); i++){
+			if(a%i == 0){
+				a++;
+				primo = 0;
+				break;
+			}
+		}
+		if(a == 2 || primo == 1)
+			return a;
+		a++;
+	}
 }
 
 /* Exibe o jogo */
@@ -215,9 +246,147 @@ int exibir_registro(int rrn)
 	preco = preco *  (100-desconto);
 	preco = ((int) preco)/ (float) 100 ;
 	printf("%07.2f\n",  preco);
-	strncpy(categorias, j.categoria, strlen(j.categoria));
-  for (cat = strtok (categorias, "|"); cat != NULL; cat = strtok (NULL, "|"))
-    printf("%s ", cat);
+	strcpy(categorias, j.categoria);
+	for (cat = strtok (categorias, "|"); cat != NULL; cat = strtok (NULL, "|"))
+    	printf("%s ", cat);
 	printf("\n");
 	return 1;
+}
+
+/* Recupera do arquivo o registro com o rrn
+ * informado e retorna os dados na struct Produto */
+Produto recuperar_registro(int rrn)
+{
+	char temp[TAM_REGISTRO], *p;
+	strncpy(temp, ARQUIVO + ((rrn)*TAM_REGISTRO), TAM_REGISTRO);
+	temp[TAM_REGISTRO] = '\0';
+	Produto j;
+	p = strtok(temp,"@");
+	strcpy(j.pk,p);
+	p = strtok(NULL,"@");
+	strcpy(j.nome,p);
+	p = strtok(NULL,"@");
+	strcpy(j.marca,p);
+	p = strtok(NULL,"@");
+	strcpy(j.data,p);
+	p = strtok(NULL,"@");
+	strcpy(j.ano,p);
+	p = strtok(NULL,"@");
+	strcpy(j.preco,p);
+	p = strtok(NULL,"@");
+	strcpy(j.desconto,p);
+	p = strtok(NULL,"@");
+	strcpy(j.categoria,p);
+
+	return j;
+}
+
+// gera a chave a partir dos dados recuperados do registro
+void gerar_chave(Produto *produto){
+	char chave[11], marca[3], data[11];
+	memset(chave, 0, 11);
+	strncpy(chave, produto->nome, 2);
+	memset(marca, 0, 3);
+	strncpy(marca, produto->marca, 2);
+	strcat(chave, marca);
+	memset(data, 0, 11);
+	strcpy(data, produto->data);
+	strcat(chave, strtok(data, "/"));
+	strcat(chave, strtok(NULL, "/"));
+	strcat(chave, produto->ano);
+	strcat(chave, "\0");
+
+	// salva a chave gerada na pk do produto
+	strcpy(produto->pk, chave);
+}
+
+Produto ler_entrada(char *registro){
+	Produto novo;
+	// leituras
+	scanf(" %[^\n]s%*c", novo.nome);
+	scanf(" %[^\n]s%*c", novo.marca);
+	scanf(" %[^\n]s%*c", novo.data);
+	scanf(" %[^\n]s%*c", novo.ano);
+	scanf(" %[^\n]s%*c", novo.preco);
+	scanf(" %[^\n]s%*c", novo.desconto);
+	scanf(" %[^\n]s%*c", novo.categoria);
+	gerar_chave(&novo);
+
+	// grava infos em um registro só
+	sprintf(registro, "%s@%s@%s@%s@%s@%s@%s@%s@", novo.pk, novo.nome, novo.marca, novo.data, novo.ano, novo.preco, novo.desconto, novo.categoria);
+	int tam = strlen(registro);
+	while(tam < TAM_REGISTRO){
+		registro[tam] = '#';
+		tam++;
+	}
+	registro[tam] = '\0';
+
+	return novo;
+}
+
+int buscar_rrn(Hashtable tabela, char *pk){
+}
+
+void criar_tabela(Hashtable *tabela, int tam){
+}
+
+void carregar_tabela(Hashtable* tabela){
+}
+
+void cadastrar(Hashtable* tabela){
+}
+
+int alterar(Hashtable tabela){
+	char desconto[4], pk[11];
+	int pos, rrn;
+	memset(desconto, 0, 4);
+	memset(pk, 0, 11);
+	scanf(" %[^\n]s%*c", pk);
+	pos = buscar_rrn(tabela, pk);
+	if(pos == -1){
+		printf(REGISTRO_N_ENCONTRADO);
+		return 0;
+	}
+	rrn = tabela.v[pos].rrn;
+	scanf(" %[^\n]s%*c", desconto);
+	while(strlen(desconto) != 3){
+		printf(CAMPO_INVALIDO);
+		scanf(" %[^\n]s%*c", desconto);
+	}
+
+	int indice = rrn*TAM_REGISTRO;
+	int lim = indice + TAM_REGISTRO;
+	int conta_arroba = 0;
+
+	// encontra onde esta o desconto no arquivo
+	while(indice < lim){
+		if(ARQUIVO[indice] == '@')
+			conta_arroba++;
+		indice++;
+		if(conta_arroba == 6)
+			break;
+	}
+
+	// modifica o arquivo
+	lim = indice + 2;
+	pos = 0;
+	while(indice <= lim){
+		ARQUIVO[indice] = desconto[pos];
+		indice++;
+		pos++;
+	}
+
+	return 1;
+}
+
+void buscar(Hashtable tabela){
+}
+
+void imprimir_tabela(Hashtable tabela){
+}
+
+int remover(Hashtable* tabela){
+}
+
+void liberar_tabela(Hashtable* tabela){
 }

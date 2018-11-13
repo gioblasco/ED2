@@ -355,13 +355,12 @@ Produto ler_entrada(char *registro){
 
 // gera a chave a partir dos dados recuperados do registro
 void gerar_chave(Produto *produto){
-	char chave[11], marca[3], data[11];
-	memset(chave, 0, 11);
+	char chave[11] = "";
 	strncpy(chave, produto->nome, 2);
-	memset(marca, 0, 3);
+	char marca[3] = "";
 	strncpy(marca, produto->marca, 2);
 	strcat(chave, marca);
-	memset(data, 0, 11);
+	char data[11] = "";
 	strcpy(data, produto->data);
 	strcat(chave, strtok(data, "/"));
 	strcat(chave, strtok(NULL, "/"));
@@ -455,14 +454,11 @@ node_Btree_is *read_btree_is(int rrn){
 }
 
 void write_btree_ip(node_Btree_ip *salvar, int rrn){
-	char registro[tamanho_registro_ip], rrn_chave[5], ehfolha[2], folha[4];
+	char registro[tamanho_registro_ip], rrn_chave[5], ehfolha[2] = "", folha[4];
 	int max;
 	if(salvar == NULL)
 		return;
 	memset(registro, 0, tamanho_registro_ip);
-	memset(rrn_chave, 0, 5);
-	memset(ehfolha, 0, 2);
-	memset(folha, 0, 4);
 	sprintf(registro, "%03d", salvar->num_chaves);
 	for(int i = 0; i < salvar->num_chaves; i++){
 		strcat(registro, salvar->chave[i].pk);
@@ -487,13 +483,11 @@ void write_btree_ip(node_Btree_ip *salvar, int rrn){
 }
 
 void write_btree_is(node_Btree_is *salvar, int rrn){
-	char registro[tamanho_registro_is], ehfolha[2], folha[4];
+	char registro[tamanho_registro_is], ehfolha[2] = "", folha[4];
 	int max;
 	if(salvar == NULL)
 		return;
 	memset(registro, 0, tamanho_registro_is);
-	memset(ehfolha, 0, 2);
-	memset(folha, 0, 4);
 	sprintf(registro, "%03d", salvar->num_chaves);
 	for(int i = 0; i < salvar->num_chaves; i++){
 		strcat(registro, salvar->chave[i].pk);
@@ -570,8 +564,7 @@ void criar_indices(int *iprimary, int *ibrand){
 
 void cadastrar(int* iprimary, int* ibrand){
 	Produto p;
-	char novo_produto[193];
-	memset(novo_produto, 0, 193);
+	char novo_produto[193] = "";
 
 	p = ler_entrada(novo_produto);
 
@@ -723,7 +716,6 @@ int insere_registro_aux_ip(int rrn_inicial, Chave_ip *chave){
 				return divide_no_ip(rrn_inicial, chave, rrn_filhodireito);
 			}
 		} else {
-			libera_no_ip(no_ip);
 			return -1;
 		}
 	}
@@ -880,9 +872,7 @@ int divide_no_is(int rrn_inicial, Chave_is *chave, int rrn_filhodireito){
 }
 
 int alterar(int iprimary){
-	char desconto[4], pk[11];
-	memset(desconto, 0, 4);
-	memset(pk, 0, 11);
+	char desconto[4] = "", pk[11] = "";
 	int rrn;
 	scanf(" %[^\n]s%*c", pk);
 	rrn = buscar_ip(iprimary, pk, 0);
@@ -922,13 +912,11 @@ int alterar(int iprimary){
 }
 
 void buscar(int iprimary, int ibrand){
-	int opSearch = 0, rrn;
-	char pk[TAM_PRIMARY_KEY], marca[TAM_STRING_INDICE], nome[TAM_NOME];
-	char *aux;
-
-	memset(pk, 0, TAM_PRIMARY_KEY);
-	memset(marca, 0, TAM_STRING_INDICE);
-	memset(nome, 0, TAM_NOME);
+	int opSearch = 0;
+	char pk[TAM_PRIMARY_KEY] = "";
+	char marca[TAM_STRING_INDICE] = "";
+	char nome[TAM_NOME] = "";
+	int rrn;
 
 	scanf(" %d%*c", &opSearch);
 	switch(opSearch){
@@ -949,9 +937,7 @@ void buscar(int iprimary, int ibrand){
 			strcat(marca, "$");
 			strcat(marca, nome);
 			printf(NOS_PERCORRIDOS_IS, marca);
-			aux = buscar_is(ibrand, marca, 1);
-			strcpy(pk, aux);
-			free(aux);
+			strcpy(pk, buscar_is(ibrand, marca, 1));
 			printf("\n\n");
 			if(!strcmp(pk, "")){
 				printf(REGISTRO_N_ENCONTRADO);
@@ -1048,7 +1034,6 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 
 	if (aux < no_is->num_chaves && strcmp(marca, no_is->chave[aux].string) == 0){
 		pk_res = (char *) malloc (sizeof(char) * TAM_PRIMARY_KEY);
-		memset(pk_res, 0, sizeof(char) * TAM_PRIMARY_KEY);
 		sprintf(pk_res, "%s", no_is->chave[aux].pk);
 		libera_no_is(no_is);
 		return pk_res;
@@ -1104,7 +1089,6 @@ void listar_ip(int raiz, int nivel){
 void listar_is(int raiz){
 	node_Btree_is *no_is;
 	char string[TAM_STRING_INDICE];
-	memset(string, 0, TAM_STRING_INDICE);
 	if(nregistrosis == 0){
 		printf(REGISTRO_N_ENCONTRADO);
 		return;
