@@ -432,9 +432,10 @@ void cadastrar(Hashtable* tabela){ // pode substituir um removido?
 
 int alterar(Hashtable tabela){
 	char desconto[TAM_DESCONTO], pk[TAM_PRIMARY_KEY];
-	int pos, rrn;
-	memset(desconto, 0, TAM_DESCONTO);
+	int rrn, pos;
+	char ehdesc;
 	memset(pk, 0, TAM_PRIMARY_KEY);
+	memset(desconto, 0, TAM_DESCONTO);
 	scanf(" %[^\n]s%*c", pk);
 	pos = buscar_rrn(tabela, pk);
 	if(pos == -1){
@@ -442,10 +443,23 @@ int alterar(Hashtable tabela){
 		return 0;
 	}
 	rrn = tabela.v[pos].rrn;
+
 	scanf(" %[^\n]s%*c", desconto);
-	while(strlen(desconto) != 3){
-		printf(CAMPO_INVALIDO);
-		scanf(" %[^\n]s%*c", desconto);
+	while(1){
+		ehdesc = 1;
+		if(strlen(desconto) != 3)
+			ehdesc = 0;
+		if(ehdesc && !isdigit(desconto[0]) && !isdigit(desconto[1]) && !isdigit(desconto[2]))
+			ehdesc = 0;
+		if(ehdesc && (atoi(desconto) < 0 || atoi(desconto) > 100))
+			ehdesc = 0;
+		if(!ehdesc){
+			printf(CAMPO_INVALIDO);
+			memset(desconto, 0, TAM_DESCONTO);
+			scanf(" %[^\n]s%*c", desconto);
+		} else {
+			break;
+		}
 	}
 
 	int indice = rrn*TAM_REGISTRO;

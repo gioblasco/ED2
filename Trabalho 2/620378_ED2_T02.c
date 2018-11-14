@@ -872,18 +872,34 @@ int divide_no_is(int rrn_inicial, Chave_is *chave, int rrn_filhodireito){
 }
 
 int alterar(int iprimary){
-	char desconto[4] = "", pk[11] = "";
+	char desconto[TAM_DESCONTO], pk[TAM_PRIMARY_KEY];
 	int rrn;
+	char ehdesc;
+	memset(pk, 0, TAM_PRIMARY_KEY);
+	memset(desconto, 0, TAM_DESCONTO);
 	scanf(" %[^\n]s%*c", pk);
 	rrn = buscar_ip(iprimary, pk, 0);
 	if(rrn < 0){
 		printf(REGISTRO_N_ENCONTRADO);
 		return 0;
 	}
+
 	scanf(" %[^\n]s%*c", desconto);
-	while(strlen(desconto) != 3){
-		printf(CAMPO_INVALIDO);
-		scanf(" %[^\n]s%*c", desconto);
+	while(1){
+		ehdesc = 1;
+		if(strlen(desconto) != 3)
+			ehdesc = 0;
+		if(ehdesc && !isdigit(desconto[0]) && !isdigit(desconto[1]) && !isdigit(desconto[2]))
+			ehdesc = 0;
+		if(ehdesc && (atoi(desconto) < 0 || atoi(desconto) > 100))
+			ehdesc = 0;
+		if(!ehdesc){
+			printf(CAMPO_INVALIDO);
+			memset(desconto, 0, TAM_DESCONTO);
+			scanf(" %[^\n]s%*c", desconto);
+		} else {
+			break;
+		}
 	}
 
 	int indice = rrn*TAM_REGISTRO;
@@ -996,7 +1012,7 @@ int buscar_ip(int rrn, char chave[TAM_PRIMARY_KEY], char print){
 		libera_no_ip(no_ip);
 		if(print)
 			printf("\n");
-		buscar_ip(rrn_res, chave, print);
+		return buscar_ip(rrn_res, chave, print);
 	}
 }
 
@@ -1047,7 +1063,7 @@ char * buscar_is(int rrn, char marca[TAM_STRING_INDICE], char print){
 		libera_no_is(no_is);
 		if(print)
 			printf("\n");
-		buscar_is(rrn_res, marca, print);
+		return buscar_is(rrn_res, marca, print);
 	}
 }
 
@@ -1100,11 +1116,11 @@ void listar_is(int raiz){
 		if(i < no_is->num_chaves){
 			strcpy(string, strtok(no_is->chave[i].string, "$"));
 			printf("%s", string);
-			for(int i = strlen(string); i < 50; i++)
+			for(int j = strlen(string); j < 50; j++)
 				printf("-");
 			strcpy(string, no_is->chave[i].string+strlen(string)+1);
 			printf(" %s", string);
-			for(int i = strlen(string); i < 50; i++)
+			for(int k = strlen(string); k < 50; k++)
 				printf("-");
 			printf("\n");
 		}

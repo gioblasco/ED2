@@ -141,8 +141,6 @@ int main()
 	if (carregarArquivo)
 		carregar_tabela(&tabela);
 
-
-
 	/* Execução do programa */
 	int opcao = 0;
 	while(opcao != 6) {
@@ -325,6 +323,7 @@ Produto ler_entrada(char *registro){
 }
 
 int buscar_rrn(Hashtable tabela, char *pk){
+	
 }
 
 void criar_tabela(Hashtable *tabela, int tam){
