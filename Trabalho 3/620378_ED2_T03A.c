@@ -404,6 +404,9 @@ void cadastrar(Hashtable* tabela){ // pode substituir um removido?
 
 	p = ler_entrada(registro);
 	pos = hash(p.pk, tabela->tam);
+	if(pos < 0){
+		return;
+	}
 	while(tabela->v[pos].estado == 1){
 		qtd++;
 		if(strcmp(tabela->v[pos].pk, p.pk) == 0){
@@ -541,5 +544,4 @@ int remover(Hashtable* tabela){
 
 void liberar_tabela(Hashtable* tabela){
 	free(tabela->v);
-	//free(tabela);
 }
