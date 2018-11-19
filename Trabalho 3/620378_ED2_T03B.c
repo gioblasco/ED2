@@ -171,13 +171,11 @@ int main()
 			break;
 		case 6:
 			liberar_tabela(&tabela);
-			break;// qual o tamanho maximo disso?
-		/*
+			break;
 		case 10:
 			printf(INICIO_ARQUIVO);
 			printf("%s\n", (*ARQUIVO!='\0') ? ARQUIVO : ARQUIVO_VAZIO);
 			break;
-		*/
 		default:
 			printf(OPCAO_INVALIDA);
 			break;

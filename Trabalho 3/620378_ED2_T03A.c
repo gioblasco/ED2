@@ -346,16 +346,16 @@ Produto ler_entrada(char *registro){
 }
 
 int buscar_rrn(Hashtable tabela, char *pk){
-	short pos;
-	int qtd = 0;
+	short pos, posinicio;
 
 	pos = hash(pk, tabela.tam);
 	if(pos < 0)
 		return -1;
+
+	posinicio = pos;
 	while(tabela.v[pos].estado != 0 && strcmp(tabela.v[pos].pk, pk) != 0){
-		qtd++;
 		pos = (pos+1) % tabela.tam;
-		if(qtd >= tabela.tam){ // ja passou pela tabela hash inteira
+		if(posinicio == pos){ // ja passou pela tabela hash inteira
 			break;
 		}
 	}
@@ -395,8 +395,8 @@ void carregar_tabela(Hashtable* tabela){
 }
 
 void cadastrar(Hashtable* tabela){ // pode substituir um removido?
-	int i, conflito = 0, qtd = 0;
-	short pos;
+	int i, conflito = 0;
+	short pos, posinicio;
 	Produto p;
 	Chave c;
 	char registro[TAM_REGISTRO];
@@ -407,14 +407,15 @@ void cadastrar(Hashtable* tabela){ // pode substituir um removido?
 	if(pos < 0){
 		return;
 	}
+
+	posinicio = pos;
 	while(tabela->v[pos].estado == 1){
-		qtd++;
 		if(strcmp(tabela->v[pos].pk, p.pk) == 0){
 			printf(ERRO_PK_REPETIDA, p.pk);
 			return;
 		}
 		pos = (pos+1) % tabela->tam;
-		if(qtd >= tabela->tam){ // ja passou pela tabela hash inteira
+		if(pos == posinicio){ // ja passou pela tabela hash inteira
 			printf(ERRO_TABELA_CHEIA);
 			return;
 		}
@@ -423,7 +424,7 @@ void cadastrar(Hashtable* tabela){ // pode substituir um removido?
 
 	c.estado = OCUPADO;
 	strcpy(c.pk, p.pk);
-	c.rrn = nregistros;
+	c.rrn = strlen(ARQUIVO)/TAM_REGISTRO;
 
 	tabela->v[pos] = c;
 
@@ -539,6 +540,8 @@ int remover(Hashtable* tabela){
 	ARQUIVO[(rrn)*TAM_REGISTRO] = '*';
 	ARQUIVO[((rrn)*TAM_REGISTRO)+1] = '|';
 	tabela->v[pos].estado = REMOVIDO;
+
+	nregistros--;
 	return 1;
 }
 
