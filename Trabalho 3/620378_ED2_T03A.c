@@ -408,17 +408,18 @@ void cadastrar(Hashtable* tabela){ // pode substituir um removido?
 		return;
 	}
 
-	posinicio = pos;
+	if(buscar_rrn(*tabela, p.pk) != -1){
+		printf(ERRO_PK_REPETIDA, p.pk);
+		return;
+	}
+
+	if(tabela->tam == nregistros){
+		printf(ERRO_TABELA_CHEIA);
+		return;
+	}
+
 	while(tabela->v[pos].estado == 1){
-		if(strcmp(tabela->v[pos].pk, p.pk) == 0){
-			printf(ERRO_PK_REPETIDA, p.pk);
-			return;
-		}
 		pos = (pos+1) % tabela->tam;
-		if(pos == posinicio){ // ja passou pela tabela hash inteira
-			printf(ERRO_TABELA_CHEIA);
-			return;
-		}
 		conflito++;
 	}
 
@@ -435,11 +436,11 @@ void cadastrar(Hashtable* tabela){ // pode substituir um removido?
 }
 
 int alterar(Hashtable tabela){
-	char desconto[TAM_DESCONTO], pk[TAM_PRIMARY_KEY];
+	char desconto[TAM_REGISTRO], pk[TAM_PRIMARY_KEY];
 	int rrn, pos;
 	char ehdesc;
 	memset(pk, 0, TAM_PRIMARY_KEY);
-	memset(desconto, 0, TAM_DESCONTO);
+	memset(desconto, 0, TAM_REGISTRO);
 	scanf(" %[^\n]s%*c", pk);
 	pos = buscar_rrn(tabela, pk);
 	if(pos == -1){
@@ -459,7 +460,7 @@ int alterar(Hashtable tabela){
 			ehdesc = 0;
 		if(!ehdesc){
 			printf(CAMPO_INVALIDO);
-			memset(desconto, 0, TAM_DESCONTO);
+			memset(desconto, 0, TAM_REGISTRO);
 			scanf(" %[^\n]s%*c", desconto);
 		} else {
 			break;
@@ -542,6 +543,7 @@ int remover(Hashtable* tabela){
 	tabela->v[pos].estado = REMOVIDO;
 
 	nregistros--;
+
 	return 1;
 }
 
