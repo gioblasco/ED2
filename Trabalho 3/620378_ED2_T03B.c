@@ -408,12 +408,12 @@ void cadastrar(Hashtable* tabela){
 }
 
 int alterar(Hashtable tabela){
-	char desconto[TAM_DESCONTO], pk[TAM_PRIMARY_KEY];
+	char desconto[TAM_REGISTRO], pk[TAM_PRIMARY_KEY];
 	int rrn, pos;
 	char ehdesc;
 	Chave *aux;
 	memset(pk, 0, TAM_PRIMARY_KEY);
-	memset(desconto, 0, TAM_DESCONTO);
+	memset(desconto, 0, TAM_REGISTRO);
 	scanf(" %[^\n]s%*c", pk);
 	pos = hash(pk, tabela.tam);
 	if(pos < 0){
@@ -441,7 +441,7 @@ int alterar(Hashtable tabela){
 			ehdesc = 0;
 		if(!ehdesc){
 			printf(CAMPO_INVALIDO);
-			memset(desconto, 0, TAM_DESCONTO);
+			memset(desconto, 0, TAM_REGISTRO);
 			scanf(" %[^\n]s%*c", desconto);
 		} else {
 			break;
